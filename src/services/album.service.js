@@ -1,4 +1,4 @@
-const Album = require('../../models/Album');
+const Album = require('../models/Album');
 
 const createAlbum = async (albumData) => {
     return await Album.create(albumData);

@@ -1,4 +1,4 @@
-const Playlist = require('../../models/Playlist');
+const Playlist = require('../models/Playlist');
 
 const createPlaylist = async (playlistData) => {
     const newPlaylist = await Playlist.create(playlistData);

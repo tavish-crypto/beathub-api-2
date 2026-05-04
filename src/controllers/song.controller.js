@@ -1,5 +1,7 @@
 const songService = require("../services/song.service");
 const mongoose = require("mongoose");
+const { encodeCursor, decodeCursor } = require('../utils/cursor');
+const Song = require("../models/Song");
 
 const createSongController = async (req, res) => {
     try {
@@ -92,9 +94,66 @@ const deleteSongController = async (req, res) => {
     }
 };
 
+const getSongsCursor = async (req, res) => {
+  try {
+    // 1. Limit (with safety cap)
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+
+    // 2. Decode cursor if present
+    const encodedCursor = req.query.cursor;
+    let cursor = null;
+
+    if (encodedCursor) {
+      cursor = decodeCursor(encodedCursor);
+    }
+
+    // 3. Build query (IMPORTANT: uses $lt)
+    const query = cursor ? { _id: { $lt: cursor } } : {};
+
+    // 4. Fetch (limit + 1 to detect next page)
+    const songs = await Song.find(query)
+    .select('-v')
+    .sort({ _id: -1 }) // newest first
+    .limit(limit + 1)
+    .lean();
+
+    // 5. Check if more data exists
+    const hasMore = songs.length > limit;
+
+    if (hasMore) {
+      songs.pop(); // remove extra item
+    }
+
+    // 6. Generate next cursor
+    const nextCursor =
+      hasMore && songs.length > 0
+        ? encodeCursor(songs[songs.length - 1]._id)
+        : null;
+
+    res.status(200).json({
+      success: true,
+      data: songs,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit,
+        count: songs.length
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
+
 module.exports = {
     createSongController,
     updateSongController,
     getAllSongsController,
     deleteSongController,
+    getSongsCursor
 };
+

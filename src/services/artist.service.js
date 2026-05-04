@@ -1,4 +1,4 @@
-const Artist = require('../../models/Artist');
+const Artist = require('../models/Artist');
 
 const createArtist = async (artistData) => {
     const newArtist = await Artist.create(artistData);

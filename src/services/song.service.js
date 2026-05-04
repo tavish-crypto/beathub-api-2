@@ -1,4 +1,4 @@
-const Song = require('../../models/Song');
+const Song = require('../models/Song');
 
 const createSong = async (songData) => {
     const newSong = await Song.create(songData)
